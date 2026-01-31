@@ -1,0 +1,29 @@
+{
+  "name": "glicko2",
+  "version": "1.0.0",
+  "description": "Système de classement Glicko-2 pour TypeScript/Bun",
+  "module": "index.ts",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "demo": "bun run index.ts",
+    "test": "bun test"
+  },
+  "keywords": [
+    "glicko2",
+    "rating",
+    "ranking",
+    "elo",
+    "chess",
+    "competition"
+  ],
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
