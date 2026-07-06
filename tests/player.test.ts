@@ -74,8 +74,8 @@ describe("Player — expectedScore", () => {
 
   it("est complémentaire : E(a,b) + E(b,a) ≈ 1", () => {
     const a = new Player("a", 1600, 150);
-    const b = new Player("b", 1400, 200);
-    expect(a.expectedScore(b) + b.expectedScore(a)).toBeCloseTo(1, 1);
+    const b = new Player("b", 1400, 150);
+    expect(a.expectedScore(b) + b.expectedScore(a)).toBeCloseTo(1, 5);
   });
 });
 
