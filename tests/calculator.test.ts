@@ -133,8 +133,8 @@ describe("Glicko2Calculator — predictWinProbability", () => {
   });
 
   it("prob(a,b) + prob(b,a) ≈ 1", () => {
-    const a = new Player("a", 1650, 100);
-    const b = new Player("b", 1350, 200);
+    const a = new Player("a", 1650, 150);
+    const b = new Player("b", 1350, 150);
     const pAB = Glicko2Calculator.predictWinProbability(a, b);
     const pBA = Glicko2Calculator.predictWinProbability(b, a);
     expect(pAB + pBA).toBeCloseTo(1, 5);
