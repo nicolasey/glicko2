@@ -169,7 +169,9 @@ export class Glicko2 {
 
       // Calculer le nouveau rating
       const newRating = this.calculator.calculateNewRating(player, outcomes);
-      
+
+      const prev = { rating: player.rating, rd: player.rd, volatility: player.volatility };
+
       // Appliquer les changements
       player.updateGlicko2Values(
         (newRating.rating - CONSTANTS.DEFAULT_RATING) / CONSTANTS.SCALE,
@@ -177,7 +179,9 @@ export class Glicko2 {
         newRating.volatility
       );
       player.setLastRatingPeriod(now);
-      
+
+      this.config.onRatingUpdate?.(playerId, prev, { rating: player.rating, rd: player.rd, volatility: player.volatility });
+
       updatedPlayers.push(player);
     }
 
@@ -336,10 +340,11 @@ export class Glicko2 {
 
 // Ré-export pour faciliter l'utilisation
 export { Player, Match, Glicko2Calculator, CONSTANTS, DEFAULT_CONFIG };
-export type { 
-  Glicko2Config, 
-  PartialConfig, 
-  MatchResult, 
+export type {
+  Glicko2Config,
+  PartialConfig,
+  MatchResult,
   PlayerData,
-  MatchOutcome 
+  MatchOutcome,
+  PlayerSnapshot,
 } from "./types.ts";

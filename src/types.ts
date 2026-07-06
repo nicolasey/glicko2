@@ -6,6 +6,13 @@
 /** Résultat d'un match : victoire = 1, défaite = 0, match nul = 0.5 */
 export type MatchResult = 1 | 0.5 | 0;
 
+/** Snapshot immuable d'un joueur avant/après mise à jour */
+export interface PlayerSnapshot {
+  rating: number;
+  rd: number;
+  volatility: number;
+}
+
 /** Configuration du système Glicko-2 */
 export interface Glicko2Config {
   /** Tau - contrainte sur la volatilité (valeur par défaut : 0.5) */
@@ -20,6 +27,8 @@ export interface Glicko2Config {
   defaultRd: number;
   /** Volatilité initiale (valeur par défaut : 0.06) */
   defaultVolatility: number;
+  /** Hook appelé après chaque mise à jour de rating (XP, badges, logs…) */
+  onRatingUpdate?: (playerId: string, prev: PlayerSnapshot, next: PlayerSnapshot) => void;
 }
 
 /** Configuration partielle pour les mises à jour */
