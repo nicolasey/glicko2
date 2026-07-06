@@ -1,6 +1,6 @@
 {
-  "name": "glicko2",
-  "version": "1.0.0",
+  "name": "@nicolasey/glicko2",
+  "version": "0.0.1",
   "description": "Système de classement Glicko-2 pour TypeScript/Bun",
   "module": "index.ts",
   "type": "module",
@@ -19,7 +19,6 @@
     "chess",
     "competition"
   ],
-  "private": true,
   "devDependencies": {
     "@types/bun": "latest"
   },
