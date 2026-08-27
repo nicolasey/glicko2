@@ -257,6 +257,21 @@ describe("Glicko2 — serialize / deserialize", () => {
     expect(restored.getPendingMatchesCount()).toBe(1);
   });
 
+  it("l'instance restaurée calcule correctement les ratings", () => {
+    const g = new Glicko2();
+    g.createPlayer("alice");
+    g.createPlayer("bob");
+    g.recordMatch("alice", "bob", 1);
+
+    const restored = Glicko2.deserialize(g.serialize());
+    const updated = restored.updateRatings();
+
+    expect(updated).toHaveLength(2);
+    expect(restored.getPlayer("alice")!.rating).toBeGreaterThan(1500);
+    expect(restored.getPlayer("bob")!.rating).toBeLessThan(1500);
+    expect(restored.getPendingMatchesCount()).toBe(0);
+  });
+
   it("les matchs en attente sont restaurés", () => {
     const g = new Glicko2();
     g.createPlayer("a"); g.createPlayer("b");
