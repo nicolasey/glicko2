@@ -211,6 +211,18 @@ describe("Glicko2 — predict", () => {
     g.createPlayer("b", 1300);
     expect(g.predict("a", "b")).toBeGreaterThan(0.5);
   });
+
+  it("lève si le joueur 1 n'existe pas", () => {
+    const g = new Glicko2();
+    g.createPlayer("alice");
+    expect(() => g.predict("unknown", "alice")).toThrow();
+  });
+
+  it("lève si le joueur 2 n'existe pas", () => {
+    const g = new Glicko2();
+    g.createPlayer("alice");
+    expect(() => g.predict("alice", "unknown")).toThrow();
+  });
 });
 
 describe("Glicko2 — getLeaderboard", () => {
