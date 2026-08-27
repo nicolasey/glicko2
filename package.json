@@ -8,7 +8,7 @@
     ".": "./index.ts"
   },
   "scripts": {
-    "demo": "bun run index.ts",
+    "demo": "bun run examples/index.ts",
     "test": "bun test"
   },
   "keywords": [

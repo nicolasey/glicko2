@@ -1,57 +1,14 @@
 /**
- * Glicko-2 rating library for TypeScript/Bun
- * 
- * Based on the algorithm developed by Mark E. Glickman
- * 
- * @example
- * ```typescript
- * import { Glicko2 } from "./index.ts";
- * 
- * // Create the system
- * const glicko = new Glicko2();
- * 
- * // Create players
- * const alice = glicko.createPlayer("alice");
- * const bob = glicko.createPlayer("bob");
- * const charlie = glicko.createPlayer("charlie");
- * 
- * // Record matches
- * glicko.recordMatch("alice", "bob", 1);    // Alice beats Bob
- * glicko.recordMatch("bob", "charlie", 1);  // Bob beats Charlie
- * glicko.recordMatch("alice", "charlie", 0.5); // Draw
- * 
- * // Compute the new ratings
- * glicko.updateRatings();
- * 
- * // Print the leaderboard
- * console.log(glicko.getLeaderboard());
- * 
- * // Predict a result
- * const prob = glicko.predict("alice", "bob");
- * console.log(`Alice win probability: ${(prob * 100).toFixed(1)}%`);
- * ```
+ * Runnable Glicko-2 demo: `bun run demo`
+ *
+ * API walkthrough lives in the README and docs/CLASSIC.md.
  */
 
-// Main exports
-export { Glicko2 } from "../src/glicko2.ts";
-export { Player } from "../src/player.ts";
-export { Glicko2Calculator, Match } from "../src/calculator.ts";
-export {
-  CONSTANTS,
-  DEFAULT_CONFIG,
-  type Glicko2Config,
-  type PartialConfig,
-  type MatchResult,
-  type PlayerData,
-  type RatingUpdate,
-  type MatchOutcome,
-} from "../src/types.ts";
+import { Glicko2 } from "../src/glicko2.ts";
 
 // Usage example when run directly
 if (import.meta.main) {
   console.log("=== Glicko-2 rating system demo ===\n");
-  
-  const { Glicko2 } = await import("../src/glicko2.ts");
   
   // Create the system with the default configuration
   const glicko = new Glicko2({

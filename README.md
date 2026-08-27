@@ -187,7 +187,7 @@ The callback receives the player ID, the state before the update, and the state 
 ```bash
 bun install   # dependencies
 bun test      # test suite
-bun run demo  # demo (index.ts)
+bun run demo  # demo (examples/index.ts)
 ```
 
 ## Architecture
