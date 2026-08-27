@@ -1,7 +1,7 @@
 {
   "name": "@nicolasey/glicko2",
   "version": "0.0.1",
-  "description": "Système de classement Glicko-2 pour TypeScript/Bun",
+  "description": "Glicko-2 Rating System made with TypeScript/Bun",
   "module": "index.ts",
   "type": "module",
   "exports": {
