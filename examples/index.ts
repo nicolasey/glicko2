@@ -1,38 +1,38 @@
 /**
- * Librairie de classement Glicko-2 pour TypeScript/Bun
+ * Glicko-2 rating library for TypeScript/Bun
  * 
- * Basé sur l'algorithme développé par Mark E. Glickman
+ * Based on the algorithm developed by Mark E. Glickman
  * 
  * @example
  * ```typescript
  * import { Glicko2 } from "./index.ts";
  * 
- * // Créer le système
+ * // Create the system
  * const glicko = new Glicko2();
  * 
- * // Créer des joueurs
+ * // Create players
  * const alice = glicko.createPlayer("alice");
  * const bob = glicko.createPlayer("bob");
  * const charlie = glicko.createPlayer("charlie");
  * 
- * // Enregistrer des matchs
- * glicko.recordMatch("alice", "bob", 1);    // Alice bat Bob
- * glicko.recordMatch("bob", "charlie", 1);  // Bob bat Charlie
- * glicko.recordMatch("alice", "charlie", 0.5); // Match nul
+ * // Record matches
+ * glicko.recordMatch("alice", "bob", 1);    // Alice beats Bob
+ * glicko.recordMatch("bob", "charlie", 1);  // Bob beats Charlie
+ * glicko.recordMatch("alice", "charlie", 0.5); // Draw
  * 
- * // Calculer les nouveaux ratings
+ * // Compute the new ratings
  * glicko.updateRatings();
  * 
- * // Afficher le classement
+ * // Print the leaderboard
  * console.log(glicko.getLeaderboard());
  * 
- * // Prédire un résultat
+ * // Predict a result
  * const prob = glicko.predict("alice", "bob");
- * console.log(`Probabilité de victoire d'Alice : ${(prob * 100).toFixed(1)}%`);
+ * console.log(`Alice win probability: ${(prob * 100).toFixed(1)}%`);
  * ```
  */
 
-// Exports principaux
+// Main exports
 export { Glicko2 } from "../src/glicko2.ts";
 export { Player } from "../src/player.ts";
 export { Glicko2Calculator, Match } from "../src/calculator.ts";
@@ -47,13 +47,13 @@ export {
   type MatchOutcome,
 } from "../src/types.ts";
 
-// Exemple d'utilisation si exécuté directement
+// Usage example when run directly
 if (import.meta.main) {
-  console.log("=== Démonstration du système de classement Glicko-2 ===\n");
+  console.log("=== Glicko-2 rating system demo ===\n");
   
   const { Glicko2 } = await import("../src/glicko2.ts");
   
-  // Créer le système avec la configuration par défaut
+  // Create the system with the default configuration
   const glicko = new Glicko2({
     tau: 0.5,
     defaultRating: 1500,
@@ -61,8 +61,8 @@ if (import.meta.main) {
     defaultVolatility: 0.06,
   });
   
-  // Créer 4 joueurs
-  console.log("Création des joueurs :");
+  // Create 4 players
+  console.log("Creating players:");
   const alice = glicko.createPlayer("Alice");
   const bob = glicko.createPlayer("Bob");
   const charlie = glicko.createPlayer("Charlie");
@@ -70,61 +70,61 @@ if (import.meta.main) {
   
   [alice, bob, charlie, dave].forEach(p => console.log(`  ${p.toString()}`));
   
-  // Simuler une période de rating avec plusieurs matchs
-  console.log("\n--- Période de rating 1 ---");
+  // Simulate a rating period with several matches
+  console.log("\n--- Rating period 1 ---");
   
-  // Alice bat Bob
+  // Alice beats Bob
   glicko.recordMatch("Alice", "Bob", 1);
-  console.log("Match : Alice bat Bob");
+  console.log("Match: Alice beats Bob");
   
-  // Charlie bat Dave
+  // Charlie beats Dave
   glicko.recordMatch("Charlie", "Dave", 1);
-  console.log("Match : Charlie bat Dave");
+  console.log("Match: Charlie beats Dave");
   
-  // Alice bat Charlie
+  // Alice beats Charlie
   glicko.recordMatch("Alice", "Charlie", 1);
-  console.log("Match : Alice bat Charlie");
+  console.log("Match: Alice beats Charlie");
   
-  // Bob fait match nul avec Dave
+  // Bob draws with Dave
   glicko.recordMatch("Bob", "Dave", 0.5);
-  console.log("Match : Bob fait match nul avec Dave");
+  console.log("Match: Bob draws with Dave");
   
-  // Calculer les nouveaux ratings
+  // Compute the new ratings
   glicko.updateRatings();
   
-  console.log("\nRatings après période 1 :");
+  console.log("\nRatings after period 1:");
   glicko.getLeaderboard().forEach((p, i) => {
     console.log(`  ${i + 1}. ${p.toString()}`);
   });
   
-  // Simuler une deuxième période de rating
-  console.log("\n--- Période de rating 2 ---");
+  // Simulate a second rating period
+  console.log("\n--- Rating period 2 ---");
   
-  // Bob bat Charlie (surprise !)
+  // Bob beats Charlie (upset!)
   glicko.recordMatch("Bob", "Charlie", 1);
-  console.log("Match : Bob bat Charlie (surprise !)");
+  console.log("Match: Bob beats Charlie (upset!)");
   
-  // Dave bat Alice (encore plus surprenant !)
+  // Dave beats Alice (even bigger upset!)
   glicko.recordMatch("Dave", "Alice", 1);
-  console.log("Match : Dave bat Alice (encore plus surprenant !)");
+  console.log("Match: Dave beats Alice (even bigger upset!)");
   
   glicko.updateRatings();
   
-  console.log("\nRatings après période 2 :");
+  console.log("\nRatings after period 2:");
   glicko.getLeaderboard().forEach((p, i) => {
     console.log(`  ${i + 1}. ${p.toString()}`);
   });
   
-  // Démonstration des prédictions
-  console.log("\n--- Prédictions ---");
+  // Prediction demo
+  console.log("\n--- Predictions ---");
   const prob1 = glicko.predict("Alice", "Bob");
-  console.log(`Probabilité de victoire d'Alice contre Bob : ${(prob1 * 100).toFixed(1)}%`);
+  console.log(`Alice win probability against Bob: ${(prob1 * 100).toFixed(1)}%`);
   
   const prob2 = glicko.predict("Charlie", "Dave");
-  console.log(`Probabilité de victoire de Charlie contre Dave : ${(prob2 * 100).toFixed(1)}%`);
+  console.log(`Charlie win probability against Dave: ${(prob2 * 100).toFixed(1)}%`);
   
-  // Classement avec intervalles de confiance
-  console.log("\n--- Classement avec intervalles de confiance (95%) ---");
+  // Leaderboard with confidence intervals
+  console.log("\n--- Leaderboard with 95% confidence intervals ---");
   glicko.getLeaderboardWithConfidence().forEach((item, i) => {
     const { player, lowerBound, upperBound } = item;
     console.log(
@@ -133,5 +133,5 @@ if (import.meta.main) {
     );
   });
   
-  console.log("\n=== Fin de la démonstration ===");
+  console.log("\n=== End of demo ===");
 }

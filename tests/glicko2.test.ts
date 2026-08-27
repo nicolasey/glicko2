@@ -3,52 +3,52 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Glicko2 } from "../src/glicko2.ts";
 import type { PlayerSnapshot } from "../src/glicko2.ts";
 
-describe("Glicko2 — gestion des joueurs", () => {
+describe("Glicko2 — player management", () => {
   let g: Glicko2;
   beforeEach(() => { g = new Glicko2(); });
 
-  it("createPlayer crée un joueur avec les valeurs par défaut", () => {
+  it("createPlayer creates a player with the default values", () => {
     const p = g.createPlayer("alice");
     expect(p.id).toBe("alice");
     expect(p.rating).toBe(1500);
     expect(p.rd).toBe(350);
   });
 
-  it("createPlayer avec valeurs personnalisées", () => {
+  it("createPlayer with custom values", () => {
     const p = g.createPlayer("bob", 1800, 100, 0.04);
     expect(p.rating).toBe(1800);
     expect(p.rd).toBe(100);
   });
 
-  it("createPlayer lance une erreur si l'ID existe déjà", () => {
+  it("createPlayer throws if the ID already exists", () => {
     g.createPlayer("alice");
     expect(() => g.createPlayer("alice")).toThrow();
   });
 
-  it("getPlayer retourne le joueur ou undefined", () => {
+  it("getPlayer returns the player or undefined", () => {
     g.createPlayer("alice");
     expect(g.getPlayer("alice")).toBeDefined();
     expect(g.getPlayer("ghost")).toBeUndefined();
   });
 
-  it("removePlayer supprime le joueur", () => {
+  it("removePlayer removes the player", () => {
     g.createPlayer("alice");
     expect(g.removePlayer("alice")).toBe(true);
     expect(g.getPlayer("alice")).toBeUndefined();
   });
 
-  it("removePlayer retourne false si le joueur n'existe pas", () => {
+  it("removePlayer returns false if the player does not exist", () => {
     expect(g.removePlayer("ghost")).toBe(false);
   });
 
-  it("getAllPlayers retourne tous les joueurs", () => {
+  it("getAllPlayers returns every player", () => {
     g.createPlayer("a");
     g.createPlayer("b");
     expect(g.getAllPlayers()).toHaveLength(2);
   });
 });
 
-describe("Glicko2 — enregistrement des matchs", () => {
+describe("Glicko2 — recording matches", () => {
   let g: Glicko2;
   beforeEach(() => {
     g = new Glicko2();
@@ -56,22 +56,22 @@ describe("Glicko2 — enregistrement des matchs", () => {
     g.createPlayer("b");
   });
 
-  it("recordMatch incrémente getPendingMatchesCount", () => {
+  it("recordMatch increments getPendingMatchesCount", () => {
     g.recordMatch("a", "b", 1);
     expect(g.getPendingMatchesCount()).toBe(1);
   });
 
-  it("recordMatchWithWinner avec gagnant", () => {
+  it("recordMatchWithWinner with a winner", () => {
     g.recordMatchWithWinner("a", "b", "a");
     expect(g.getPendingMatchesCount()).toBe(1);
   });
 
-  it("recordMatchWithWinner avec nul (null)", () => {
+  it("recordMatchWithWinner with a draw (null)", () => {
     g.recordMatchWithWinner("a", "b", null);
     expect(g.getPendingMatchesCount()).toBe(1);
   });
 
-  it("clearPendingMatches vide la file", () => {
+  it("clearPendingMatches empties the queue", () => {
     g.recordMatch("a", "b", 1);
     g.clearPendingMatches();
     expect(g.getPendingMatchesCount()).toBe(0);
@@ -86,23 +86,23 @@ describe("Glicko2 — updateRatings", () => {
     g.createPlayer("bob");
   });
 
-  it("retourne un tableau vide s'il n'y a aucun match en attente", () => {
+  it("returns an empty array when no match is pending", () => {
     expect(g.updateRatings()).toHaveLength(0);
   });
 
-  it("retourne les joueurs mis à jour", () => {
+  it("returns the updated players", () => {
     g.recordMatch("alice", "bob", 1);
     const updated = g.updateRatings();
     expect(updated.length).toBeGreaterThan(0);
   });
 
-  it("vide les matchs en attente après updateRatings", () => {
+  it("clears the pending matches after updateRatings", () => {
     g.recordMatch("alice", "bob", 1);
     g.updateRatings();
     expect(g.getPendingMatchesCount()).toBe(0);
   });
 
-  it("victoire → alice monte, bob descend", () => {
+  it("win → alice goes up, bob goes down", () => {
     const ratingAliceBefore = g.getPlayer("alice")!.rating;
     const ratingBobBefore   = g.getPlayer("bob")!.rating;
     g.recordMatch("alice", "bob", 1);
@@ -111,7 +111,7 @@ describe("Glicko2 — updateRatings", () => {
     expect(g.getPlayer("bob")!.rating).toBeLessThan(ratingBobBefore);
   });
 
-  it("nul → ratings proches des valeurs initiales (≤ 20 points d'écart)", () => {
+  it("draw → ratings stay close to the initial values (≤ 20 points apart)", () => {
     g.recordMatch("alice", "bob", 0.5);
     g.updateRatings();
     expect(Math.abs(g.getPlayer("alice")!.rating - 1500)).toBeLessThan(20);
@@ -120,7 +120,7 @@ describe("Glicko2 — updateRatings", () => {
 });
 
 describe("Glicko2 — onRatingUpdate hook", () => {
-  it("est appelé une fois par joueur mis à jour", () => {
+  it("is called once per updated player", () => {
     const calls: string[] = [];
     const g = new Glicko2({
       onRatingUpdate: (id) => calls.push(id),
@@ -134,7 +134,7 @@ describe("Glicko2 — onRatingUpdate hook", () => {
     expect(calls).toHaveLength(2);
   });
 
-  it("reçoit prev avec l'ancien rating et next avec le nouveau", () => {
+  it("receives prev with the old rating and next with the new one", () => {
     let capturedPrev: PlayerSnapshot | null = null;
     let capturedNext: PlayerSnapshot | null = null;
     const g = new Glicko2({
@@ -151,10 +151,10 @@ describe("Glicko2 — onRatingUpdate hook", () => {
     g.updateRatings();
 
     expect(capturedPrev!.rating).toBe(1500);
-    expect(capturedNext!.rating).toBeGreaterThan(1500); // victoire → monte
+    expect(capturedNext!.rating).toBeGreaterThan(1500); // win → goes up
   });
 
-  it("prev.rating ≠ next.rating après un match", () => {
+  it("prev.rating ≠ next.rating after a match", () => {
     let prev: PlayerSnapshot | null = null;
     let next: PlayerSnapshot | null = null;
     const g = new Glicko2({
@@ -166,7 +166,7 @@ describe("Glicko2 — onRatingUpdate hook", () => {
     expect(prev!.rating).not.toBe(next!.rating);
   });
 
-  it("n'est pas appelé si aucun match n'est enregistré", () => {
+  it("is not called when no match is recorded", () => {
     let called = false;
     const g = new Glicko2({ onRatingUpdate: () => { called = true; } });
     g.createPlayer("a");
@@ -176,12 +176,12 @@ describe("Glicko2 — onRatingUpdate hook", () => {
 });
 
 describe("Glicko2 — applyDecay", () => {
-  it("augmente le RD des joueurs inactifs", () => {
-    const g = new Glicko2({ ratingPeriod: 1 }); // 1 seconde = 1 période
+  it("widens the RD of inactive players", () => {
+    const g = new Glicko2({ ratingPeriod: 1 }); // 1 second = 1 period
     const p = g.createPlayer("alice");
     const rdBefore = p.rd;
 
-    // Simuler une inactivité de 10 périodes
+    // Simulate 10 periods of inactivity
     const past = new Date(Date.now() - 10_000);
     p.setLastRatingPeriod(past);
 
@@ -189,36 +189,36 @@ describe("Glicko2 — applyDecay", () => {
     expect(p.rd).toBeGreaterThan(rdBefore);
   });
 
-  it("ne modifie pas les joueurs ayant joué récemment", () => {
+  it("leaves players who played recently untouched", () => {
     const g = new Glicko2({ ratingPeriod: 86400 });
     const p = g.createPlayer("alice");
     const rdBefore = p.rd;
-    g.applyDecay(); // dernière période = maintenant
+    g.applyDecay(); // last period = now
     expect(p.rd).toBe(rdBefore);
   });
 });
 
 describe("Glicko2 — predict", () => {
-  it("0.5 entre deux joueurs à rating identique", () => {
+  it("0.5 between two players with the same rating", () => {
     const g = new Glicko2();
     g.createPlayer("a"); g.createPlayer("b");
     expect(g.predict("a", "b")).toBeCloseTo(0.5, 5);
   });
 
-  it("> 0.5 pour le favori", () => {
+  it("> 0.5 for the favourite", () => {
     const g = new Glicko2();
     g.createPlayer("a", 1700);
     g.createPlayer("b", 1300);
     expect(g.predict("a", "b")).toBeGreaterThan(0.5);
   });
 
-  it("lève si le joueur 1 n'existe pas", () => {
+  it("throws if player 1 does not exist", () => {
     const g = new Glicko2();
     g.createPlayer("alice");
     expect(() => g.predict("unknown", "alice")).toThrow();
   });
 
-  it("lève si le joueur 2 n'existe pas", () => {
+  it("throws if player 2 does not exist", () => {
     const g = new Glicko2();
     g.createPlayer("alice");
     expect(() => g.predict("alice", "unknown")).toThrow();
@@ -226,7 +226,7 @@ describe("Glicko2 — predict", () => {
 });
 
 describe("Glicko2 — getLeaderboard", () => {
-  it("tri décroissant par défaut", () => {
+  it("descending order by default", () => {
     const g = new Glicko2();
     g.createPlayer("low",  1300);
     g.createPlayer("mid",  1500);
@@ -236,7 +236,7 @@ describe("Glicko2 — getLeaderboard", () => {
     expect(board[1]!.rating).toBeGreaterThanOrEqual(board[2]!.rating);
   });
 
-  it("tri croissant avec descending=false", () => {
+  it("ascending order with descending=false", () => {
     const g = new Glicko2();
     g.createPlayer("low", 1300); g.createPlayer("high", 1700);
     const board = g.getLeaderboard(false);
@@ -255,7 +255,7 @@ describe("Glicko2 — getLeaderboardWithConfidence", () => {
 });
 
 describe("Glicko2 — serialize / deserialize", () => {
-  it("round-trip préserve les joueurs et leurs ratings", () => {
+  it("round-trip preserves the players and their ratings", () => {
     const g = new Glicko2();
     g.createPlayer("alice", 1650, 120);
     g.createPlayer("bob",   1400, 200);
@@ -269,7 +269,7 @@ describe("Glicko2 — serialize / deserialize", () => {
     expect(restored.getPendingMatchesCount()).toBe(1);
   });
 
-  it("l'instance restaurée calcule correctement les ratings", () => {
+  it("the restored instance computes ratings correctly", () => {
     const g = new Glicko2();
     g.createPlayer("alice");
     g.createPlayer("bob");
@@ -284,7 +284,7 @@ describe("Glicko2 — serialize / deserialize", () => {
     expect(restored.getPendingMatchesCount()).toBe(0);
   });
 
-  it("les matchs en attente sont restaurés", () => {
+  it("pending matches are restored", () => {
     const g = new Glicko2();
     g.createPlayer("a"); g.createPlayer("b");
     g.recordMatch("a", "b", 0.5);

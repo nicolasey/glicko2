@@ -1,25 +1,25 @@
 import { CONSTANTS, type PlayerData, type MatchResult } from "./types.ts";
 
 /**
- * Représente un joueur avec son classement Glicko-2
+ * Represents a player with their Glicko-2 rating
  * 
- * Le système Glicko-2 utilise trois paramètres :
- * - rating : le classement (1500 par défaut)
- * - rd (rating deviation) : l'incertitude sur le classement (350 par défaut)
- * - volatility : la volatilité du classement (0.06 par défaut)
+ * The Glicko-2 system uses three parameters:
+ * - rating: the rating (1500 by default)
+ * - rd (rating deviation): the uncertainty about the rating (350 by default)
+ * - volatility: how much the rating fluctuates (0.06 by default)
  * 
- * Les valeurs sont stockées en interne à l'échelle Glicko-2 (μ, φ) mais
- * exposées à l'échelle Glicko-1 (rating, rd) pour plus de lisibilité.
+ * Values are stored internally on the Glicko-2 scale (μ, φ) but exposed
+ * on the Glicko-1 scale (rating, rd) for readability.
  */
 export class Player {
   readonly id: string;
   
-  // Valeurs à l'échelle Glicko-2 (internes)
-  private _mu: number;      // μ - rating à l'échelle Glicko-2
-  private _phi: number;     // φ - déviation à l'échelle Glicko-2
-  private _sigma: number;   // σ - volatilité
+  // Glicko-2 scale values (internal)
+  private _mu: number;      // μ - rating on the Glicko-2 scale
+  private _phi: number;     // φ - deviation on the Glicko-2 scale
+  private _sigma: number;   // σ - volatility
   
-  // Valeurs à l'échelle Glicko-1 (pour affichage)
+  // Glicko-1 scale values (for display)
   private _rating: number;
   private _rd: number;
   
@@ -38,12 +38,12 @@ export class Player {
     this._sigma = volatility;
     this._lastRatingPeriod = lastRatingPeriod ?? new Date();
     
-    // Conversion vers l'échelle Glicko-2
+    // Conversion to the Glicko-2 scale
     this._mu = (rating - CONSTANTS.DEFAULT_RATING) / CONSTANTS.SCALE;
     this._phi = rd / CONSTANTS.SCALE;
   }
 
-  /** Crée un joueur à partir de données sérialisées */
+  /** Creates a player from serialized data */
   static fromData(data: PlayerData): Player {
     return new Player(
       data.id,
@@ -54,70 +54,70 @@ export class Player {
     );
   }
 
-  /** Rating à l'échelle Glicko-1 (affichage) */
+  /** Rating on the Glicko-1 scale (display) */
   get rating(): number {
     return this._rating;
   }
 
-  /** Déviation du rating à l'échelle Glicko-1 */
+  /** Rating deviation on the Glicko-1 scale */
   get rd(): number {
     return this._rd;
   }
 
-  /** Volatilité σ */
+  /** Volatility σ */
   get volatility(): number {
     return this._sigma;
   }
 
-  /** Rating μ à l'échelle Glicko-2 (interne) */
+  /** Rating μ on the Glicko-2 scale (internal) */
   get mu(): number {
     return this._mu;
   }
 
-  /** Déviation φ à l'échelle Glicko-2 (interne) */
+  /** Deviation φ on the Glicko-2 scale (internal) */
   get phi(): number {
     return this._phi;
   }
 
-  /** Dernière période de rating */
+  /** Last rating period */
   get lastRatingPeriod(): Date {
     return this._lastRatingPeriod;
   }
 
-  /** Met à jour la dernière période de rating */
+  /** Updates the last rating period */
   setLastRatingPeriod(date: Date): void {
     this._lastRatingPeriod = date;
   }
 
   /**
-   * Calcule la probabilité de victoire contre un autre joueur
-   * @param opponent - L'adversaire
-   * @returns Probabilité de victoire entre 0 et 1
+   * Computes the win probability against another player
+   * @param opponent - The opponent
+   * @returns Win probability between 0 and 1
    */
   expectedScore(opponent: Player): number {
     return 1 / (1 + Math.exp(-this.g(opponent.phi) * (this._mu - opponent.mu)));
   }
 
   /**
-   * Met à jour les valeurs internes (échelle Glicko-2)
-   * et recalcule les valeurs d'affichage (échelle Glicko-1)
+   * Updates the internal values (Glicko-2 scale)
+   * and recomputes the display values (Glicko-1 scale)
    */
   updateGlicko2Values(mu: number, phi: number, sigma: number): void {
     this._mu = mu;
     this._phi = phi;
     this._sigma = sigma;
     
-    // Conversion vers l'échelle Glicko-1
+    // Conversion to the Glicko-1 scale
     this._rating = CONSTANTS.DEFAULT_RATING + this._mu * CONSTANTS.SCALE;
     this._rd = this._phi * CONSTANTS.SCALE;
   }
 
-  /** Fonction g(φ) utilisée dans les calculs */
+  /** g(φ) function used in the computations */
   private g(phi: number): number {
     return 1 / Math.sqrt(1 + (3 * phi * phi) / (Math.PI * Math.PI));
   }
 
-  /** Sérialise le joueur en données brutes */
+  /** Serializes the player to raw data */
   toData(): PlayerData {
     return {
       id: this.id,
@@ -128,7 +128,7 @@ export class Player {
     };
   }
 
-  /** Retourne une représentation lisible du joueur */
+  /** Returns a readable representation of the player */
   toString(): string {
     return `Player(${this.id}): rating=${this._rating.toFixed(2)}, rd=${this._rd.toFixed(2)}, σ=${this._sigma.toFixed(6)}`;
   }

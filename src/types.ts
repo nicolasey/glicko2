@@ -1,40 +1,40 @@
 /**
- * Types et interfaces pour le système de classement Glicko-2
- * Basé sur l'algorithme développé par Mark E. Glickman
+ * Types and interfaces for the Glicko-2 rating system
+ * Based on the algorithm developed by Mark E. Glickman
  */
 
-/** Résultat d'un match : victoire = 1, défaite = 0, match nul = 0.5 */
+/** Match result: win = 1, loss = 0, draw = 0.5 */
 export type MatchResult = 1 | 0.5 | 0;
 
-/** Snapshot immuable d'un joueur avant/après mise à jour */
+/** Immutable snapshot of a player before/after an update */
 export interface PlayerSnapshot {
   rating: number;
   rd: number;
   volatility: number;
 }
 
-/** Configuration du système Glicko-2 */
+/** Glicko-2 system configuration */
 export interface Glicko2Config {
-  /** Tau - contrainte sur la volatilité (valeur par défaut : 0.5) */
+  /** Tau - volatility constraint (default: 0.5) */
   tau: number;
-  /** Epsilon pour la convergence (valeur par défaut : 0.000001) */
+  /** Epsilon for convergence (default: 0.000001) */
   epsilon: number;
-  /** Période de rating par défaut en secondes */
+  /** Default rating period in seconds */
   ratingPeriod: number;
-  /** Rating initial (valeur par défaut : 1500) */
+  /** Initial rating (default: 1500) */
   defaultRating: number;
-  /** Déviation initiale (valeur par défaut : 350) */
+  /** Initial deviation (default: 350) */
   defaultRd: number;
-  /** Volatilité initiale (valeur par défaut : 0.06) */
+  /** Initial volatility (default: 0.06) */
   defaultVolatility: number;
-  /** Hook appelé après chaque mise à jour de rating (XP, badges, logs…) */
+  /** Hook called after each rating update (XP, badges, logs…) */
   onRatingUpdate?: (playerId: string, prev: PlayerSnapshot, next: PlayerSnapshot) => void;
 }
 
-/** Configuration partielle pour les mises à jour */
+/** Partial configuration for updates */
 export type PartialConfig = Partial<Glicko2Config>;
 
-/** Données d'un joueur */
+/** Player data */
 export interface PlayerData {
   id: string;
   rating: number;
@@ -43,7 +43,7 @@ export interface PlayerData {
   lastRatingPeriod?: Date;
 }
 
-/** Résultat d'un match pour un joueur */
+/** Match result from a single player's perspective */
 export interface MatchOutcome {
   opponentId: string;
   result: MatchResult;
@@ -51,44 +51,44 @@ export interface MatchOutcome {
   opponentRd: number;
 }
 
-/** Match entre deux joueurs */
+/** Match between two players */
 export interface Match {
   player1Id: string;
   player2Id: string;
-  result: MatchResult; // Du point de vue du joueur 1
+  result: MatchResult; // From player 1's point of view
   timestamp?: Date;
 }
 
-/** Nouveau calcul de rating pour un joueur */
+/** Newly computed rating for a player */
 export interface RatingUpdate {
   rating: number;
   rd: number;
   volatility: number;
 }
 
-/** Constantes mathématiques */
+/** Math constants */
 export const CONSTANTS = {
-  /** ln(10) / 400 - facteur de conversion */
+  /** ln(10) / 400 - conversion factor */
   Q: Math.log(10) / 400,
-  /** Conversion du système Glicko-1 au système Glicko-2 (échelle) */
+  /** Glicko-1 to Glicko-2 conversion (scale) */
   SCALE: 173.7178,
-  /** Rating initial par défaut (Glicko-1) */
+  /** Default initial rating (Glicko-1) */
   DEFAULT_RATING: 1500,
-  /** Déviation initiale par défaut */
+  /** Default initial deviation */
   DEFAULT_RD: 350,
-  /** Volatilité initiale par défaut */
+  /** Default initial volatility */
   DEFAULT_VOLATILITY: 0.06,
-  /** Valeur par défaut de tau */
+  /** Default tau value */
   DEFAULT_TAU: 0.5,
-  /** Précision pour la convergence */
+  /** Convergence precision */
   DEFAULT_EPSILON: 0.000001,
 } as const;
 
-/** Configuration par défaut */
+/** Default configuration */
 export const DEFAULT_CONFIG: Glicko2Config = {
   tau: CONSTANTS.DEFAULT_TAU,
   epsilon: CONSTANTS.DEFAULT_EPSILON,
-  ratingPeriod: 86400, // 1 jour en secondes
+  ratingPeriod: 86400, // 1 day in seconds
   defaultRating: CONSTANTS.DEFAULT_RATING,
   defaultRd: CONSTANTS.DEFAULT_RD,
   defaultVolatility: CONSTANTS.DEFAULT_VOLATILITY,

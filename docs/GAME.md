@@ -1,11 +1,11 @@
-# Glicko-2 pour les jeux — gamification via configuration
+# Glicko-2 for games — gamification through configuration
 
-Le cœur du système reste identique. La gamification se branche via deux leviers :
+The core of the system stays the same. Gamification plugs in through two levers:
 
-1. **La configuration** — `tau`, `defaultRd`, `defaultVolatility`, `ratingPeriod` changent le comportement de toute la courbe de progression.
-2. **Le hook `onRatingUpdate`** — point d'extension pour XP, badges, streaks, notifications, sans toucher au moteur.
+1. **Configuration** — `tau`, `defaultRd`, `defaultVolatility`, `ratingPeriod` reshape the whole progression curve.
+2. **The `onRatingUpdate` hook** — an extension point for XP, badges, streaks and notifications, without touching the engine.
 
-## Le hook onRatingUpdate
+## The onRatingUpdate hook
 
 ```typescript
 import { Glicko2 } from "./src/glicko2.ts";
@@ -19,12 +19,12 @@ const glicko = new Glicko2({
 });
 ```
 
-Le callback est appelé une fois par joueur après chaque `updateRatings()`.  
-`prev` et `next` contiennent `{ rating, rd, volatility }`.
+The callback fires once per player after every `updateRatings()`.  
+`prev` and `next` hold `{ rating, rd, volatility }`.
 
-## Recettes de gamification
+## Gamification recipes
 
-### XP proportionnel au delta de rating
+### XP proportional to the rating delta
 
 ```typescript
 const xp: Map<string, number> = new Map();
@@ -32,28 +32,28 @@ const xp: Map<string, number> = new Map();
 const glicko = new Glicko2({
   onRatingUpdate: (playerId, prev, next) => {
     const delta = next.rating - prev.rating;
-    const gained = delta > 0 ? Math.round(delta * 2) : 5; // participation XP en cas de défaite
+    const gained = delta > 0 ? Math.round(delta * 2) : 5; // participation XP on a loss
     xp.set(playerId, (xp.get(playerId) ?? 0) + gained);
   },
 });
 ```
 
-### Détection de victoire upset (outsider qui gagne)
+### Detecting an upset win (underdog takes it)
 
 ```typescript
 const glicko = new Glicko2({
   onRatingUpdate: (playerId, prev, next) => {
     const delta = next.rating - prev.rating;
-    // Un gros gain de rating sur un seul match = victoire surprise
+    // A large rating gain over a single match means an upset
     if (delta > 50) {
-      console.log(`🎉 ${playerId} upset ! +${delta.toFixed(0)} points`);
-      // → déclencher badge "David vs Goliath"
+      console.log(`🎉 ${playerId} upset! +${delta.toFixed(0)} points`);
+      // → award the "David vs Goliath" badge
     }
   },
 });
 ```
 
-### Badge "Série de victoires" via état externe
+### "Win streak" badge through external state
 
 ```typescript
 const streaks: Map<string, number> = new Map();
@@ -64,15 +64,15 @@ const glicko = new Glicko2({
     if (delta > 0) {
       const streak = (streaks.get(playerId) ?? 0) + 1;
       streaks.set(playerId, streak);
-      if (streak === 3) console.log(`🔥 ${playerId} est en série de 3 victoires !`);
+      if (streak === 3) console.log(`🔥 ${playerId} is on a 3-win streak!`);
     } else {
-      streaks.set(playerId, 0); // réinitialiser sur défaite ou nul
+      streaks.set(playerId, 0); // reset on a loss or a draw
     }
   },
 });
 ```
 
-### Protection des débutants (RD élevé = joueur récent)
+### Newcomer protection (high RD = recent player)
 
 ```typescript
 const glicko = new Glicko2({
@@ -80,61 +80,61 @@ const glicko = new Glicko2({
     const isNewPlayer = prev.rd > 200;
     const delta = next.rating - prev.rating;
     if (isNewPlayer && delta < 0) {
-      console.log(`🛡️ ${playerId} est protégé (débutant), perte atténuée affichée`);
-      // Afficher une perte réduite côté UI, le rating réel reste intact
+      console.log(`🛡️ ${playerId} is protected (newcomer), softened loss shown`);
+      // Display a reduced loss in the UI, the real rating stays intact
     }
   },
 });
 ```
 
-## Configuration selon le type de jeu
+## Configuration per game type
 
-### Jeu compétitif classique (échecs, ladder ranked)
+### Classic competitive game (chess, ranked ladder)
 
 ```typescript
 const glicko = new Glicko2({
-  tau:               0.3,    // volatilité très contrainte = ratings stables
+  tau:               0.3,    // tightly constrained volatility = stable ratings
   defaultRating:     1500,
-  defaultRd:         200,    // départ avec incertitude modérée
+  defaultRd:         200,    // start with moderate uncertainty
   defaultVolatility: 0.04,
-  ratingPeriod:      604800, // période hebdomadaire
+  ratingPeriod:      604800, // weekly period
 });
 ```
 
-### Jeu casual / mobile (progression rapide souhaitée)
+### Casual / mobile game (fast progression wanted)
 
 ```typescript
 const glicko = new Glicko2({
-  tau:               0.8,    // volatilité plus libre = progressions visibles
+  tau:               0.8,    // looser volatility = visible progression
   defaultRating:     1000,
-  defaultRd:         350,    // nouveau joueur très incertain = gros mouvements initiaux
+  defaultRd:         350,    // very uncertain newcomer = big early swings
   defaultVolatility: 0.08,
-  ratingPeriod:      86400,  // quotidien
+  ratingPeriod:      86400,  // daily
 });
 ```
 
-### Tournoi (court terme, ratings très réactifs)
+### Tournament (short term, highly reactive ratings)
 
 ```typescript
 const glicko = new Glicko2({
-  tau:               1.2,    // très réactif aux surprises
+  tau:               1.2,    // very reactive to upsets
   defaultRating:     1500,
   defaultRd:         350,
   defaultVolatility: 0.09,
-  ratingPeriod:      3600,   // période horaire
+  ratingPeriod:      3600,   // hourly period
 });
 ```
 
-## Effet des paramètres sur la courbe de jeu
+## Effect of each option on the game curve
 
-| Paramètre | Valeur basse | Valeur haute |
-|-----------|-------------|-------------|
-| `tau` | Ratings stables, peu de surprises | Gros écarts après résultats inattendus |
-| `defaultRd` | Nouveaux joueurs classés prudemment | Gros mouvements dès les premiers matchs |
-| `defaultVolatility` | Performances régulières attendues | Joueur considéré imprévisible dès le départ |
-| `ratingPeriod` | Long → RD monte lentement hors inactivité | Court → inactivité pénalise rapidement |
+| Option | Low value | High value |
+|--------|-----------|------------|
+| `tau` | Stable ratings, few surprises | Large swings after unexpected results |
+| `defaultRd` | Newcomers ranked cautiously | Big swings from the very first matches |
+| `defaultVolatility` | Consistent performance expected | Player treated as unpredictable from the start |
+| `ratingPeriod` | Long → RD creeps up slowly while inactive | Short → inactivity is penalised quickly |
 
-## Flux complet avec gamification
+## Full flow with gamification
 
 ```typescript
 import { Glicko2 } from "./src/glicko2.ts";
@@ -162,7 +162,7 @@ const glicko = new Glicko2({
 
     const streak = streaks.get(playerId)!;
     if (streak > 0 && streak % 3 === 0) {
-      console.log(`🔥 ${playerId} — série de ${streak} victoires !`);
+      console.log(`🔥 ${playerId} — ${streak}-win streak!`);
     }
   },
 });
@@ -175,7 +175,7 @@ glicko.recordMatchWithWinner("alice", "bob", "alice");
 glicko.recordMatchWithWinner("alice", "bob", "alice");
 
 glicko.updateRatings();
-// → "🔥 alice — série de 3 victoires !"
+// → "🔥 alice — 3-win streak!"
 
-console.log("XP alice :", xp.get("alice"));
+console.log("alice XP:", xp.get("alice"));
 ```

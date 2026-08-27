@@ -2,8 +2,8 @@ import { CONSTANTS, type Glicko2Config, type MatchResult, type RatingUpdate, DEF
 import { Player } from "./player.ts";
 
 /**
- * Résultat d'un match avec les informations de l'adversaire
- * Utilisé pour les calculs de mise à jour du rating
+ * Match result along with the opponent's information
+ * Used by the rating update computations
  */
 export interface MatchOutcome {
   opponent: Player;
@@ -11,10 +11,10 @@ export interface MatchOutcome {
 }
 
 /**
- * Moteur de calcul Glicko-2
+ * Glicko-2 computation engine
  * 
- * Implémente l'algorithme complet décrit dans :
- * "Example of the Calculations of the Glicko-2 System" par Mark E. Glickman
+ * Implements the full algorithm described in:
+ * "Example of the Calculations of the Glicko-2 System" by Mark E. Glickman
  */
 export class Glicko2Calculator {
   private config: Glicko2Config;
@@ -24,17 +24,17 @@ export class Glicko2Calculator {
   }
 
   /**
-   * Calcule le nouveau rating d'un joueur après une série de matchs
+   * Computes a player's new rating after a series of matches
    * 
-   * @param player - Le joueur à mettre à jour
-   * @param matches - Les matchs joués par le joueur dans cette période
-   * @returns Le nouveau rating, rd et volatility
+   * @param player - The player to update
+   * @param matches - The matches played by the player during this period
+   * @returns The new rating, rd and volatility
    */
   calculateNewRating(
     player: Player,
     matches: MatchOutcome[]
   ): RatingUpdate {
-    // Si aucun match joué, on réduit simplement la déviation (incertitude augmente avec le temps)
+      // No match played: only widen the deviation (uncertainty grows over time)
     if (matches.length === 0) {
       const newPhi = this.phiStar(player.phi, player.volatility);
       return {
@@ -44,20 +44,20 @@ export class Glicko2Calculator {
       };
     }
 
-    // 1. Calcul de v (variance de la distribution prédictive)
+    // 1. Compute v (variance of the predictive distribution)
     const v = this.calculateVariance(player, matches);
 
-    // 2. Calcul de Δ (delta, amélioration du rating estimée)
+    // 2. Compute Δ (delta, estimated rating improvement)
     const delta = this.calculateDelta(player, matches, v);
 
-    // 3. Mise à jour de la volatilité σ (itératif)
+    // 3. Update the volatility σ (iterative)
     const newSigma = this.calculateNewVolatility(player, v, delta);
 
-    // 4. Mise à jour de φ (déviation)
+    // 4. Update φ (deviation)
     const phiStar = this.phiStar(player.phi, newSigma);
     const newPhi = 1 / Math.sqrt(1 / (phiStar * phiStar) + 1 / v);
 
-    // 5. Mise à jour de μ (rating)
+    // 5. Update μ (rating)
     let newMu = player.mu;
     for (const match of matches) {
       const g = this.g(match.opponent.phi);
@@ -65,7 +65,7 @@ export class Glicko2Calculator {
       newMu += newPhi * newPhi * g * (match.result - E);
     }
 
-    // Conversion vers l'échelle Glicko-1
+    // Conversion back to the Glicko-1 scale
     const newRating = CONSTANTS.DEFAULT_RATING + newMu * CONSTANTS.SCALE;
     const newRd = newPhi * CONSTANTS.SCALE;
 
@@ -77,7 +77,7 @@ export class Glicko2Calculator {
   }
 
   /**
-   * Calcule la variance v
+   * Computes the variance v
    * v = [ Σ (g(φj)² * E(μ, μj, φj) * (1 - E(μ, μj, φj))) ]⁻¹
    */
   private calculateVariance(player: Player, matches: MatchOutcome[]): number {
@@ -91,7 +91,7 @@ export class Glicko2Calculator {
   }
 
   /**
-   * Calcule delta (Δ)
+   * Computes delta (Δ)
    * Δ = v * Σ (g(φj) * (s - E(μ, μj, φj)))
    */
   private calculateDelta(player: Player, matches: MatchOutcome[], v: number): number {
@@ -105,18 +105,18 @@ export class Glicko2Calculator {
   }
 
   /**
-   * Calcule la nouvelle volatilité σ
-   * Utilise une méthode itérative pour résoudre f(x) = 0
+   * Computes the new volatility σ
+   * Uses an iterative method to solve f(x) = 0
    */
   private calculateNewVolatility(player: Player, v: number, delta: number): number {
     const phi = player.phi;
     const sigma = player.volatility;
     
-    // 1. Paramètres initiaux
+    // 1. Initial parameters
     const a = Math.log(sigma * sigma);
     const tau = this.config.tau;
     
-    // 2. Définition de la fonction f(x)
+    // 2. Definition of the function f(x)
     const f = (x: number): number => {
       const ex = Math.exp(x);
       const phi2 = phi * phi;
@@ -126,7 +126,7 @@ export class Glicko2Calculator {
       return (numerator / denominator) - ((x - a) / (tau * tau));
     };
 
-    // 3. Recherche de la borne supérieure
+    // 3. Search for the upper bound
     let A = a;
     let B: number;
     
@@ -140,11 +140,11 @@ export class Glicko2Calculator {
       B = a - k * tau;
     }
 
-    // 4. Méthode de Newton-Raphson itérative
+    // 4. Iterative Newton-Raphson method
     let fA = f(A);
     let fB = f(B);
     
-    // Vérification des signes
+    // Sign check
     while (fB > 0 && Math.abs(B - A) > this.config.epsilon) {
       const C = A + (A - B) * fA / (fB - fA);
       const fC = f(C);
@@ -160,12 +160,12 @@ export class Glicko2Calculator {
       fB = fC;
     }
 
-    // Valeur convergée
+    // Converged value
     return Math.exp(B / 2);
   }
 
   /**
-   * Calcule φ* (déviation avec volatilité augmentée)
+   * Computes φ* (deviation with increased volatility)
    * φ* = √(φ² + σ²)
    */
   private phiStar(phi: number, sigma: number): number {
@@ -173,7 +173,7 @@ export class Glicko2Calculator {
   }
 
   /**
-   * Fonction g(φ)
+   * Function g(φ)
    * g(φ) = 1 / √(1 + 3φ²/π²)
    */
   private g(phi: number): number {
@@ -181,7 +181,7 @@ export class Glicko2Calculator {
   }
 
   /**
-   * Fonction E(μ, μj, φj)
+   * Function E(μ, μj, φj)
    * E(μ, μj, φj) = 1 / (1 + exp(-g(φj)(μ - μj)))
    */
   private E(mu: number, muJ: number, phiJ: number): number {
@@ -189,8 +189,8 @@ export class Glicko2Calculator {
   }
 
   /**
-   * Calcule la probabilité de victoire entre deux joueurs
-   * @returns Probabilité entre 0 et 1
+   * Computes the win probability between two players
+   * @returns Probability between 0 and 1
    */
   static predictWinProbability(player1: Player, player2: Player): number {
     const calculator = new Glicko2Calculator();
@@ -199,26 +199,26 @@ export class Glicko2Calculator {
   }
 
   /**
-   * Applique une augmentation de la déviation (phi) pour tenir compte
-du temps écoulé depuis le dernier match
+   * Increases the deviation (phi) to account for the time
+   * elapsed since the player's last match
    * 
-   * Cette méthode augmente l'incertitude sur le rating d'un joueur
-   * qui n'a pas joué depuis longtemps
+   * This widens the uncertainty about the rating of a player
+   * who has not played for a long time
    * 
-   * @param currentPhi - La déviation actuelle
-   * @param sigma - La volatilité
-   * @param ratingPeriods - Nombre de périodes de rating écoulées
-   * @returns La nouvelle déviation augmentée
+   * @param currentPhi - The current deviation
+   * @param sigma - The volatility
+   * @param ratingPeriods - Number of elapsed rating periods
+   * @returns The new, widened deviation
    */
   applyRatingPeriodDecay(currentPhi: number, sigma: number, ratingPeriods: number = 1): number {
-    // La déviation augmente avec le temps : φ' = √(φ² + c·σ²)
-    // où c est le nombre de périodes de rating écoulées
+    // The deviation grows over time: φ' = √(φ² + c·σ²)
+    // where c is the number of elapsed rating periods
     return Math.sqrt(currentPhi * currentPhi + ratingPeriods * sigma * sigma);
   }
 }
 
 /**
- * Classe utilitaire pour créer des matchs
+ * Utility class for creating matches
  */
 export class Match {
   readonly player1Id: string;
@@ -239,11 +239,11 @@ export class Match {
   }
 
   /**
-   * Crée un match depuis un résultat textuel
-   * @param player1Id - ID du joueur 1
-   * @param player2Id - ID du joueur 2
-   * @param winnerId - ID du gagnant (null pour match nul)
-   * @param timestamp - Date du match
+   * Creates a match from a winner
+   * @param player1Id - ID of player 1
+   * @param player2Id - ID of player 2
+   * @param winnerId - ID of the winner (null for a draw)
+   * @param timestamp - Date of the match
    */
   static fromWinner(
     player1Id: string,
@@ -263,7 +263,7 @@ export class Match {
   }
 
   /**
-   * Inverse le résultat du match (point de vue du joueur 2)
+   * Reverses the match result (from player 2's point of view)
    */
   reverse(): Match {
     return new Match(

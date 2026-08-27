@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Glicko2Calculator } from "../src/calculator.ts";
 import { Player } from "../src/player.ts";
 
-// --- Joueurs de référence (paper Glickman p.13-14) ---
+// --- Reference players (Glickman paper, p.13-14) ---
 const makeRefPlayers = () => {
   const player = new Player("player", 1500, 200, 0.06);
   const j1 = new Player("j1", 1400, 30,  0.06);
@@ -12,8 +12,8 @@ const makeRefPlayers = () => {
   return { player, j1, j2, j3 };
 };
 
-describe("Glicko2Calculator — exemple officiel Glickman", () => {
-  it("nouveau rating ≈ 1464.06", () => {
+describe("Glicko2Calculator — official Glickman example", () => {
+  it("new rating ≈ 1464.06", () => {
     const { player, j1, j2, j3 } = makeRefPlayers();
     const calc = new Glicko2Calculator();
     const result = calc.calculateNewRating(player, [
@@ -24,7 +24,7 @@ describe("Glicko2Calculator — exemple officiel Glickman", () => {
     expect(result.rating).toBeCloseTo(1464.06, 1);
   });
 
-  it("nouveau RD ≈ 151.52", () => {
+  it("new RD ≈ 151.52", () => {
     const { player, j1, j2, j3 } = makeRefPlayers();
     const calc = new Glicko2Calculator();
     const result = calc.calculateNewRating(player, [
@@ -35,7 +35,7 @@ describe("Glicko2Calculator — exemple officiel Glickman", () => {
     expect(result.rd).toBeCloseTo(151.52, 1);
   });
 
-  it("nouvelle volatilité ≈ 0.05999 (quasi-inchangée)", () => {
+  it("new volatility ≈ 0.05999 (nearly unchanged)", () => {
     const { player, j1, j2, j3 } = makeRefPlayers();
     const calc = new Glicko2Calculator();
     const result = calc.calculateNewRating(player, [
@@ -47,29 +47,29 @@ describe("Glicko2Calculator — exemple officiel Glickman", () => {
   });
 });
 
-describe("Glicko2Calculator — cas limite : aucun match", () => {
-  it("rating inchangé sans match", () => {
+describe("Glicko2Calculator — edge case: no match", () => {
+  it("rating unchanged without any match", () => {
     const p = new Player("p", 1500, 200, 0.06);
     const result = new Glicko2Calculator().calculateNewRating(p, []);
     expect(result.rating).toBe(1500);
   });
 
-  it("RD augmente (incertitude croissante) sans match", () => {
+  it("RD grows (increasing uncertainty) without any match", () => {
     const p = new Player("p", 1500, 200, 0.06);
     const result = new Glicko2Calculator().calculateNewRating(p, []);
-    // φ* = √(φ² + σ²) > φ → RD augmente
+    // φ* = √(φ² + σ²) > φ → RD grows
     expect(result.rd).toBeGreaterThan(200);
   });
 
-  it("volatilité inchangée sans match", () => {
+  it("volatility unchanged without any match", () => {
     const p = new Player("p", 1500, 200, 0.06);
     const result = new Glicko2Calculator().calculateNewRating(p, []);
     expect(result.volatility).toBe(0.06);
   });
 });
 
-describe("Glicko2Calculator — invariants de signe", () => {
-  it("victoire contre plus faible → rating monte", () => {
+describe("Glicko2Calculator — sign invariants", () => {
+  it("win against a weaker player → rating goes up", () => {
     const strong = new Player("s", 1600, 200, 0.06);
     const weak   = new Player("w", 1400, 200, 0.06);
     const result = new Glicko2Calculator().calculateNewRating(strong, [
@@ -78,7 +78,7 @@ describe("Glicko2Calculator — invariants de signe", () => {
     expect(result.rating).toBeGreaterThan(1600);
   });
 
-  it("défaite contre plus faible → rating descend", () => {
+  it("loss against a weaker player → rating goes down", () => {
     const strong = new Player("s", 1600, 200, 0.06);
     const weak   = new Player("w", 1400, 200, 0.06);
     const result = new Glicko2Calculator().calculateNewRating(strong, [
@@ -87,7 +87,7 @@ describe("Glicko2Calculator — invariants de signe", () => {
     expect(result.rating).toBeLessThan(1600);
   });
 
-  it("victoire surprise (outsider) → gain plus grand que victoire attendue", () => {
+  it("upset win (underdog) → larger gain than an expected win", () => {
     const weak   = new Player("w", 1300, 200, 0.06);
     const strong = new Player("s", 1700, 200, 0.06);
     const calc = new Glicko2Calculator();
@@ -100,7 +100,7 @@ describe("Glicko2Calculator — invariants de signe", () => {
 });
 
 describe("Glicko2Calculator — applyRatingPeriodDecay", () => {
-  it("1 période → φ' = √(φ² + σ²) > φ", () => {
+  it("1 period → φ' = √(φ² + σ²) > φ", () => {
     const calc = new Glicko2Calculator();
     const phi = 200 / 173.7178;
     const sigma = 0.06;
@@ -109,7 +109,7 @@ describe("Glicko2Calculator — applyRatingPeriodDecay", () => {
     expect(result).toBeCloseTo(Math.sqrt(phi * phi + sigma * sigma), 8);
   });
 
-  it("N périodes → φ' = √(φ² + N·σ²)", () => {
+  it("N periods → φ' = √(φ² + N·σ²)", () => {
     const calc = new Glicko2Calculator();
     const phi = 1.0;
     const sigma = 0.05;
@@ -120,13 +120,13 @@ describe("Glicko2Calculator — applyRatingPeriodDecay", () => {
 });
 
 describe("Glicko2Calculator — predictWinProbability", () => {
-  it("0.5 entre deux joueurs égaux", () => {
+  it("0.5 between two equal players", () => {
     const a = new Player("a", 1500);
     const b = new Player("b", 1500);
     expect(Glicko2Calculator.predictWinProbability(a, b)).toBeCloseTo(0.5, 5);
   });
 
-  it("> 0.5 pour le joueur plus fort", () => {
+  it("> 0.5 for the stronger player", () => {
     const a = new Player("a", 1700);
     const b = new Player("b", 1300);
     expect(Glicko2Calculator.predictWinProbability(a, b)).toBeGreaterThan(0.5);

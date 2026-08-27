@@ -1,4 +1,4 @@
-# Utilisation classique de Glicko-2
+# Classic Glicko-2 usage
 
 ## Installation
 
@@ -6,7 +6,7 @@
 import { Glicko2 } from "./src/glicko2.ts";
 ```
 
-## Démarrage rapide
+## Quick start
 
 ```typescript
 const glicko = new Glicko2();
@@ -14,7 +14,7 @@ const glicko = new Glicko2();
 const alice = glicko.createPlayer("alice");
 const bob   = glicko.createPlayer("bob");
 
-glicko.recordMatch("alice", "bob", 1); // 1 = victoire alice, 0 = victoire bob, 0.5 = nul
+glicko.recordMatch("alice", "bob", 1); // 1 = alice wins, 0 = bob wins, 0.5 = draw
 
 const updated = glicko.updateRatings();
 console.log(alice.rating, alice.rd);
@@ -22,128 +22,128 @@ console.log(alice.rating, alice.rd);
 
 ## Configuration
 
-Tous les paramètres sont optionnels.
+Every option is optional.
 
 ```typescript
 const glicko = new Glicko2({
-  tau:              0.5,    // contrainte volatilité (0.3–1.2 selon stabilité du jeu)
-  defaultRating:    1500,   // rating de départ
-  defaultRd:        350,    // incertitude de départ (haut = nouveau joueur)
-  defaultVolatility: 0.06,  // instabilité de départ
-  ratingPeriod:     86400,  // durée d'une période en secondes (ici 1 jour)
+  tau:              0.5,    // volatility constraint (0.3–1.2 depending on how stable the game is)
+  defaultRating:    1500,   // starting rating
+  defaultRd:        350,    // starting uncertainty (high = new player)
+  defaultVolatility: 0.06,  // starting instability
+  ratingPeriod:     86400,  // length of a period in seconds (here 1 day)
 });
 ```
 
-**`tau`** est le seul paramètre qui change réellement le comportement : valeur basse (~0.3) = ratings stables, valeur haute (~1.2) = ratings très réactifs aux surprises.
+**`tau`** is the only option that really changes the behaviour: a low value (~0.3) gives stable ratings, a high value (~1.2) makes ratings react sharply to upsets.
 
-## Créer des joueurs
+## Creating players
 
 ```typescript
-// Rating/RD personnalisés pour un joueur importé d'un autre système
+// Custom rating/RD for a player imported from another system
 const veteran = glicko.createPlayer("veteran", 1800, 80, 0.05);
 
-// Récupérer un joueur existant
+// Retrieve an existing player
 const p = glicko.getPlayer("alice"); // Player | undefined
 
-// Tous les joueurs
+// Every player
 const all = glicko.getAllPlayers(); // Player[]
 ```
 
-Un `Player` expose : `id`, `rating`, `rd`, `volatility`.
+A `Player` exposes: `id`, `rating`, `rd`, `volatility`.
 
-## Enregistrer des matchs
+## Recording matches
 
 ```typescript
-// Par résultat explicite (du point de vue du joueur 1)
-glicko.recordMatch("alice", "bob", 1);   // alice gagne
-glicko.recordMatch("alice", "bob", 0);   // bob gagne
-glicko.recordMatch("alice", "bob", 0.5); // nul
+// By explicit result (from player 1's point of view)
+glicko.recordMatch("alice", "bob", 1);   // alice wins
+glicko.recordMatch("alice", "bob", 0);   // bob wins
+glicko.recordMatch("alice", "bob", 0.5); // draw
 
-// Par vainqueur (plus lisible)
-glicko.recordMatchWithWinner("alice", "bob", "alice"); // alice gagne
-glicko.recordMatchWithWinner("alice", "bob", null);    // nul
+// By winner (more readable)
+glicko.recordMatchWithWinner("alice", "bob", "alice"); // alice wins
+glicko.recordMatchWithWinner("alice", "bob", null);    // draw
 
-// Avec timestamp (pour applyDecay, voir plus bas)
+// With a timestamp (for applyDecay, see below)
 glicko.recordMatch("alice", "bob", 1, new Date("2024-03-15"));
 ```
 
-Les matchs s'accumulent en attente jusqu'à `updateRatings()`.
+Matches pile up in the queue until `updateRatings()` runs.
 
-## Calculer les ratings
+## Computing ratings
 
 ```typescript
-// Traite tous les matchs en attente, retourne les joueurs mis à jour
+// Processes every pending match, returns the updated players
 const updated = glicko.updateRatings();
 ```
 
-Appeler `updateRatings()` une fois par période de rating (quotidien, hebdomadaire…).  
-Les joueurs sans match pendant la période ne sont pas affectés — utiliser `applyDecay()` pour eux.
+Call `updateRatings()` once per rating period (daily, weekly…).  
+Players with no match during the period are left untouched — use `applyDecay()` for them.
 
-## Décroissance des joueurs inactifs
+## Decay for inactive players
 
-Glicko-2 augmente le RD des joueurs inactifs pour refléter l'incertitude croissante.
+Glicko-2 widens the RD of inactive players to reflect the growing uncertainty.
 
 ```typescript
-// À appeler à la fin de chaque période, après updateRatings()
+// Call at the end of each period, after updateRatings()
 const decayed = glicko.applyDecay();
 ```
 
-`applyDecay()` parcourt tous les joueurs et augmente leur RD proportionnellement au nombre de périodes écoulées depuis leur dernier match.
+`applyDecay()` walks every player and widens their RD proportionally to the number of periods elapsed since their last match.
 
-## Classement
+## Leaderboard
 
 ```typescript
-// Trié par rating décroissant
+// Sorted by descending rating
 const board = glicko.getLeaderboard();
 
-// Avec intervalles de confiance à 95%
+// With 95% confidence intervals
 const boardWithCI = glicko.getLeaderboardWithConfidence();
 // [{ player, lowerBound, upperBound }, ...]
 ```
 
-Un RD élevé donne un intervalle large : le joueur est peu fiable dans le classement.
+A high RD gives a wide interval: that player's position is not yet reliable.
 
-## Prédire un résultat
+## Predicting a result
 
 ```typescript
 const prob = glicko.predict("alice", "bob");
-// Probabilité de victoire d'alice (0–1)
-console.log(`Alice gagne dans ${(prob * 100).toFixed(1)}% des cas`);
+// Win probability for alice (0–1)
+console.log(`Alice wins ${(prob * 100).toFixed(1)}% of the time`);
 ```
 
-## Persistance
+## Persistence
 
 ```typescript
-// Sauvegarder
+// Save
 const snapshot = glicko.serialize();
 const json = JSON.stringify(snapshot);
 
-// Restaurer
+// Restore
 const glicko2 = Glicko2.deserialize(JSON.parse(json));
 ```
 
-## Flux complet (exemple quotidien)
+## Full flow (daily example)
 
 ```typescript
 import { Glicko2 } from "./src/glicko2.ts";
 
 const glicko = new Glicko2({ tau: 0.5, ratingPeriod: 86400 });
 
-// --- Jour 1 : inscription ---
+// --- Day 1: sign-ups ---
 glicko.createPlayer("alice");
 glicko.createPlayer("bob");
 glicko.createPlayer("charlie");
 
-// --- Jour 1 : matchs du jour ---
+// --- Day 1: matches of the day ---
 glicko.recordMatchWithWinner("alice",   "bob",     "alice");
 glicko.recordMatchWithWinner("bob",     "charlie", "bob");
 glicko.recordMatchWithWinner("alice",   "charlie", "alice");
 
-// --- Fin de journée : mise à jour ---
+// --- End of day: update ---
 glicko.updateRatings();
 glicko.applyDecay();
 
-// --- Classement ---
+// --- Leaderboard ---
 for (const p of glicko.getLeaderboard()) {
   console.log(`${p.id}: ${p.rating.toFixed(0)} ± ${p.rd.toFixed(0)}`);
 }
