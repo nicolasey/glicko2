@@ -1,6 +1,11 @@
 # Glicko-2 Ranking System
 
+[![CI](https://github.com/nicolasey/glicko2/actions/workflows/ci.yml/badge.svg)](https://github.com/nicolasey/glicko2/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/%40nicolasey%2Fglicko2.svg)](https://www.npmjs.com/package/@nicolasey/glicko2)
+[![npm downloads](https://img.shields.io/npm/dm/%40nicolasey%2Fglicko2.svg)](https://www.npmjs.com/package/@nicolasey/glicko2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?logo=bun&logoColor=white)](https://bun.sh)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 Une librairie TypeScript/Bun complète pour implémenter le système de classement Glicko-2, développé par Mark E. Glickman.
 
